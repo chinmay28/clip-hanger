@@ -10,6 +10,19 @@ tag that shouldn't be published.
 
 ## Unreleased — the 2026.8 line
 
+### Clip Manager is now Clip Hanger
+
+New name, new mark: clips hang from a rail under a hook that doubles as a play
+button. Everything that carries the name moves with it — the wordmark and the
+home-screen icons, the docs, and the Go module path, now
+`github.com/chinmay28/clip-hanger`. The repository moved to match, so `go get`
+and the quick-start URL both want the new path.
+
+Nothing an installed machine depends on changes: the binary is still `clip`,
+and the systemd unit, the `/opt/clip` and `/var/lib/clip` paths and every
+`CLIP_*` environment variable are untouched — an existing install upgrades in
+place.
+
 ### The first load stopped waiting on the walk
 
 Every listing used to walk every source before answering — and one app load
@@ -97,7 +110,7 @@ enforced against.
 
 ### The first cut
 
-Clip Manager exists: a single static Go binary with an embedded web client
+Clip Hanger exists: a single static Go binary with an embedded web client
 (installable to a phone's home screen as a PWA) over a directory of
 security-camera clips.
 

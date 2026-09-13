@@ -1,6 +1,6 @@
 {
   "id": "/",
-  "name": "Clip Manager",
+  "name": "Clip Hanger",
   "short_name": "Clips",
   "description": "View the clips your security cameras record — .dav included — and keep their directory in budget with quotas that retire the oldest footage first.",
   "start_url": "/",

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chinmay28/clip-manager/internal/clips"
+	"github.com/chinmay28/clip-hanger/internal/clips"
 )
 
 func testServer(t *testing.T, source string) *Server {

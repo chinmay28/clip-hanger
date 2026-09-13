@@ -12,7 +12,7 @@
 // it originally shipped. The patch number can only come from git, which a
 // compiled binary has no access to, so it is stamped at link time instead:
 //
-//	go build -ldflags "-X github.com/chinmay28/clip-manager/internal/version.Patch=$(git rev-list --count HEAD)"
+//	go build -ldflags "-X github.com/chinmay28/clip-hanger/internal/version.Patch=$(git rev-list --count HEAD)"
 //
 // `make build` (and `build-go`) does this for you via scripts/version.mjs,
 // which is also what the web client's build reads Year/Month from — keep the

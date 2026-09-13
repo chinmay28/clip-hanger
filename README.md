@@ -1,9 +1,9 @@
-# Clip Manager
+# Clip Hanger
 
 **A viewer and a budget for the directory your security cameras record into.**
 
 Security cameras write a new clip every few seconds and never stop. Clip
-Manager sits on that directory and does the two things it needs: shows you the
+Hanger sits on that directory and does the two things it needs: shows you the
 footage — `.dav` from Dahua/Amcrest hardware included — and keeps the
 directory from eating the disk, with quotas that retire the oldest footage
 first when a line is crossed.
@@ -12,7 +12,7 @@ Ships as a **single static Go binary** with an embedded web UI that installs
 to a phone's home screen like an app.
 
 ```
-┌ Clip Manager ──────────────────────────────── [Clips] [Settings] ─────┐
+┌ Clip Hanger ───────────────────────────────── [Clips] [Settings] ─────┐
 │ [All] [Front door 709] [Driveway 421] [Backyard 388]      ✏️ Rename   │
 │ [Today] [Yest.] [Aug 29] [Aug 28] [Aug 27] …  ←scrolls                │
 │ [ 285 ] [ 292 ] [ 281 ]  [ 279 ]  [ 282 ]                             │
@@ -41,10 +41,10 @@ walk lands. Sources and quotas live behind the **Settings** tab.
 
 ## Quick start on Linux (Ubuntu / Raspberry Pi)
 
-Install Clip Manager as a hardened **systemd service** with one command:
+Install Clip Hanger as a hardened **systemd service** with one command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-manager/main/scripts/quickstart.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/quickstart.sh | sudo bash
 ```
 
 (or, from a checkout: `sudo ./scripts/quickstart.sh`)
@@ -66,11 +66,11 @@ removable from a browser. More sources can be added and removed later in the
 app itself (see [Sources](#sources)).
 
 **Or skip the build entirely** and install the prebuilt binary from the latest
-[release](https://github.com/chinmay28/clip-manager/releases) — no Node, no
+[release](https://github.com/chinmay28/clip-hanger/releases) — no Node, no
 Go, no source tree, seconds instead of minutes on a Raspberry Pi:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-manager/main/scripts/quickstart.sh \
+curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/quickstart.sh \
   | sudo CLIP_INSTALL=release bash
 ```
 
@@ -348,7 +348,7 @@ the full commit graph (`fetch-depth: 0`, or `--filter=blob:none` rather than
 ## Project Structure
 
 ```
-clip-manager/
+clip-hanger/
 ├── cmd/clip/                    # CLI: serve, prune, version
 ├── internal/
 │   ├── clips/                   # the directory walk: clips, channels, playability, the scan cache
@@ -395,11 +395,11 @@ cd web && npm run dev     # → http://localhost:5173
 
 ## License
 
-Clip Manager is free software licensed under the **GNU Affero General Public
+Clip Hanger is free software licensed under the **GNU Affero General Public
 License v3.0** (`AGPL-3.0-only`). See [LICENSE](./LICENSE) for the full text.
 
-The AGPL is a strong copyleft license: anyone who distributes Clip Manager —
+The AGPL is a strong copyleft license: anyone who distributes Clip Hanger —
 or **runs a modified version as a network service** — must make the complete
 corresponding source available under the same license. Copyright in the
-project is held by Chinmay Manjunath, who may also offer Clip Manager under
+project is held by Chinmay Manjunath, who may also offer Clip Hanger under
 separate commercial terms.

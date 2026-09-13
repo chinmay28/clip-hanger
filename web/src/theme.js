@@ -1,7 +1,7 @@
 /* One palette for the whole app. The surfaces are the same deep navy family
    SAND Vault wears — the two apps are siblings and often run on the same box —
-   but the accent is Clip Manager's own: the sky blue of the icon's timeline
-   bars, with the recorder's red kept for errors and the REC dot alone. */
+   but the accent is Clip Hanger's own: the sky blue of the clips on the icon's
+   rail, with the recorder's red kept for errors and the REC dot alone. */
 export const COLORS = {
   bg: '#0a0e17',
   surface: '#111827',

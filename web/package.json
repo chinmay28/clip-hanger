@@ -2,7 +2,7 @@
   "name": "clip-web",
   "private": true,
   "version": "0.0.0",
-  "description": "Clip Manager web client — view security-camera clips and keep their directory in budget.",
+  "description": "Clip Hanger web client — view security-camera clips and keep their directory in budget.",
   "license": "AGPL-3.0-only",
   "author": "Chinmay Manjunath",
   "type": "module",
