@@ -1,21 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Clip Manager">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Clip Hanger">
   <!--
-    A timeline of clips. The outer frame is the screen; the bars inside are
-    recordings a few seconds long, laid out the way a camera writes them —
-    unevenly, one after another. The red dot is the recorder, still going.
+    The hanger. Clips hang from the bar the way garments hang from a rail —
+    three of them, the nearest in front, lightest to darkest as they go back.
+    The loop at the top is the hook, which in the full logo doubles as a play
+    button; the red dot beside it is the recorder, still going.
 
-    Drawn on a 64px grid but sized down to 24px in the header, so everything is
+    Drawn on a 64px grid but sized down to 26px in the header, so everything is
     kept to thick strokes and wide gaps — thin detail turns to mud at that
-    size. Rects only (rx=half-height makes the dot a circle): that is the whole
-    of what scripts/make-icons.mjs can raster, and it must stay that way.
+    size. The play triangles the full logo sets inside the hook and the cards
+    are left out here for exactly that reason: at 26px they are two pixels of
+    smudge, and the hanger silhouette carries the name on its own.
+
+    Rects and lines only — a rect with rx=half-height is a circle or a ring,
+    and a line is drawn with round caps. That is the whole of what
+    scripts/make-icons.mjs can raster, and it must stay that way: anything
+    else and `make icons` fails rather than quietly rendering something that
+    is no longer the logo.
   -->
   <rect width="64" height="64" rx="14" fill="#0a0e17"/>
-  <rect x="8.5" y="8.5" width="47" height="47" rx="9" fill="none" stroke="#1e2d3d" stroke-width="3"/>
-  <g fill="#0ea5e9">
-    <rect x="17" y="18" width="19" height="8" rx="3"/>
-    <rect x="40" y="18" width="7" height="8" rx="3" opacity="0.45"/>
-    <rect x="17" y="30" width="30" height="8" rx="3"/>
-    <rect x="17" y="42" width="11" height="8" rx="3" opacity="0.45"/>
+
+  <!-- The hook: a ring, so the stroke is what is drawn, not the disc. -->
+  <rect x="25.75" y="7.75" width="12.5" height="12.5" rx="6.25" fill="none" stroke="#38bdf8" stroke-width="3.5"/>
+  <rect x="36" y="4.5" width="7" height="7" rx="3.5" fill="#ef4444"/>
+
+  <!-- Shoulders down from the hook, then the bar they land on. -->
+  <g stroke="#0ea5e9" stroke-width="4" stroke-linecap="round">
+    <line x1="32" y1="22" x2="10.5" y2="37.5"/>
+    <line x1="32" y1="22" x2="53.5" y2="37.5"/>
+    <line x1="10.5" y1="37.5" x2="53.5" y2="37.5"/>
   </g>
-  <rect x="39" y="42" width="8" height="8" rx="4" fill="#ef4444"/>
+
+  <!-- The loops the clips hang by, hooked over the rail. -->
+  <g fill="#38bdf8">
+    <rect x="16" y="34.5" width="3" height="8" rx="1.5"/>
+    <rect x="31" y="34.5" width="3" height="8" rx="1.5"/>
+    <rect x="46" y="34.5" width="3" height="8" rx="1.5"/>
+  </g>
+
+  <!-- The clips themselves: nearest in front, stepping back a shade at a
+       time the way hung garments do. -->
+  <rect x="11" y="41" width="13" height="14" rx="3" fill="#38bdf8"/>
+  <rect x="26" y="41" width="13" height="14" rx="3" fill="#0ea5e9"/>
+  <rect x="41" y="41" width="13" height="14" rx="3" fill="#0284c7"/>
 </svg>

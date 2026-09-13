@@ -36,7 +36,7 @@ export function Brand({ size = 'md' }) {
             word, so setting it in caps-and-tracking would be borrowing a
             costume: both words here wear the same script, the same case and
             the same size, and only the colour tells them apart — Clip in the
-            accent, Manager sitting back — so the pair still reads as one name
+            accent, Hanger sitting back — so the pair still reads as one name
             with a front and a back rather than two styles glued together.
 
             A script sits small for its point size, so the wordmark is set
@@ -67,7 +67,7 @@ export function Brand({ size = 'md' }) {
           paddingLeft: '0.06em',
         }}>
           <span style={{ color: COLORS.accent }}>Clip</span>
-          <span style={{ color: COLORS.textDim }}> Manager</span>
+          <span style={{ color: COLORS.textDim }}> Hanger</span>
         </span>
         <span style={{
           fontFamily: FONT.mono,

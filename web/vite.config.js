@@ -10,7 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 
 /* The wordmark's script face.
  *
- * Clip Manager fetches nothing from anywhere: the app is served entirely from
+ * Clip Hanger fetches nothing from anywhere: the app is served entirely from
  * the local binary, and a logo is not the thing to break that for. So the face
  * is never linked — it is read off disk at build time and embedded in the page
  * itself, which means it cannot become a request to somebody's CDN no matter

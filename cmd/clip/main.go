@@ -1,4 +1,4 @@
-// Command clip is the Clip Manager CLI and server.
+// Command clip is the Clip Hanger CLI and server.
 //
 //	clip serve --clips /var/lib/clip/clips --port 8124
 //	clip prune --clips /var/lib/clip/clips [--dry-run]
@@ -19,10 +19,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chinmay28/clip-manager/internal/clips"
-	"github.com/chinmay28/clip-manager/internal/server"
-	"github.com/chinmay28/clip-manager/internal/storage"
-	"github.com/chinmay28/clip-manager/internal/version"
+	"github.com/chinmay28/clip-hanger/internal/clips"
+	"github.com/chinmay28/clip-hanger/internal/server"
+	"github.com/chinmay28/clip-hanger/internal/storage"
+	"github.com/chinmay28/clip-hanger/internal/version"
 )
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `Clip Manager — view security-camera clips and keep their directory in budget.
+	fmt.Fprint(os.Stderr, `Clip Hanger — view security-camera clips and keep their directory in budget.
 
 Usage:
   clip serve  [flags]   run the web app and the quota schedule
@@ -192,7 +192,7 @@ func cmdServe(args []string) {
 	if described == "" {
 		described = "the sources in " + srv.ConfigPath
 	}
-	log.Printf("Clip Manager %s — serving %s on http://%s", version.String(), described, addr)
+	log.Printf("Clip Hanger %s — serving %s on http://%s", version.String(), described, addr)
 	if err := http.ListenAndServe(addr, srv.Handler()); err != nil {
 		log.Fatal(err)
 	}

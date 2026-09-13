@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/chinmay28/clip-manager/internal/clips"
+	"github.com/chinmay28/clip-hanger/internal/clips"
 )
 
 // writeClip creates a fake recording of a known size and age. Ages are spread

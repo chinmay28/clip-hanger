@@ -22,7 +22,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chinmay28/clip-manager/internal/clips"
+	"github.com/chinmay28/clip-hanger/internal/clips"
 )
 
 // Config is the quota policy, stored as JSON in the data directory. Zero (or a

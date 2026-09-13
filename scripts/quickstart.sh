@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# Clip Manager — Linux quick-start installer (Ubuntu / Debian / Raspberry Pi OS).
+# Clip Hanger — Linux quick-start installer (Ubuntu / Debian / Raspberry Pi OS).
 #
-# One command, run as root, installs Clip Manager as a hardened systemd service:
+# One command, run as root, installs Clip Hanger as a hardened systemd service:
 #
-#   curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-manager/main/scripts/quickstart.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/quickstart.sh | sudo bash
 #
 # Two ways to get the binary — CLIP_INSTALL picks one:
 #
@@ -55,7 +55,7 @@
 # Configure via environment variables (all optional):
 #
 #   CLIP_INSTALL     source | release        where the binary comes from (default: source)
-#   CLIP_REPO        git URL to clone        (default: https://github.com/chinmay28/clip-manager.git)
+#   CLIP_REPO        git URL to clone        (default: https://github.com/chinmay28/clip-hanger.git)
 #   CLIP_REF         branch/tag/commit       (default: main; source mode)
 #   CLIP_RELEASE     latest | <tag>          release to install (default: latest; release mode)
 #   CLIP_USER        service system user     (default: clip)
@@ -140,7 +140,7 @@ case "$INSTALL_MODE" in
   source | release) ;;
   *) die "CLIP_INSTALL must be 'source' or 'release' (got '$INSTALL_MODE')." ;;
 esac
-CLIP_REPO="${CLIP_REPO:-https://github.com/chinmay28/clip-manager.git}"
+CLIP_REPO="${CLIP_REPO:-https://github.com/chinmay28/clip-hanger.git}"
 CLIP_REF="${CLIP_REF:-main}"
 RELEASE_TAG="${CLIP_RELEASE:-latest}"
 SVC_USER="${CLIP_USER:-clip}"
@@ -223,7 +223,7 @@ if [ "$INSTALL_MODE" = source ] && [ -f "$SELF_FILE" ]; then
   SELF_DIR="$(cd "$(dirname "$SELF_FILE")" >/dev/null 2>&1 && pwd)"
   if top="$(git -C "$SELF_DIR" rev-parse --show-toplevel 2>/dev/null)" \
      && [ -f "$top/go.mod" ] \
-     && grep -q 'module github.com/chinmay28/clip-manager' "$top/go.mod" 2>/dev/null; then
+     && grep -q 'module github.com/chinmay28/clip-hanger' "$top/go.mod" 2>/dev/null; then
     LOCAL_CHECKOUT="$top"
     SRC_DIR="$top"   # build & serve from where the user already cloned
   fi
@@ -241,7 +241,7 @@ fi
 PREV_BIN="${SERVER_BIN}.prev"
 STAGED_BIN="${SERVER_BIN}.new"
 
-log "Clip Manager quick start"
+log "Clip Hanger quick start"
 printf '  %-10s %s\n' "install"  "$INSTALL_MODE$( [ "$INSTALL_MODE" = release ] && echo " ($RELEASE_TAG)" )"
 if [ "$INSTALL_MODE" = release ]; then
   printf '  %-10s %s\n' "binary"  "$SERVER_BIN"
@@ -471,7 +471,7 @@ deploy_to() {
 RELEASE_VERSION=""
 if [ "$INSTALL_MODE" = release ]; then
   arch="$(release_arch)"
-  api="https://api.github.com/repos/chinmay28/clip-manager/releases"
+  api="https://api.github.com/repos/chinmay28/clip-hanger/releases"
   if [ "$RELEASE_TAG" = latest ]; then
     api="$api/latest"
   else
@@ -483,7 +483,7 @@ if [ "$INSTALL_MODE" = release ]; then
   [ -n "$RELEASE_VERSION" ] || die "could not determine the release tag."
 
   asset="clip-${RELEASE_VERSION}-linux-${arch}"
-  base="https://github.com/chinmay28/clip-manager/releases/download/${RELEASE_VERSION}"
+  base="https://github.com/chinmay28/clip-hanger/releases/download/${RELEASE_VERSION}"
 
   tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
   log "downloading $asset ($RELEASE_VERSION)…"
@@ -523,7 +523,7 @@ else
     install -d -o "$SVC_USER" -g "$SVC_USER" -m 755 "$PREFIX"
     log "cloning $CLIP_REPO…"
     # NOT --depth 1: the version's patch number is the commit count, so a
-    # shallow clone would build something calling itself v2026.8.1 forever.
+    # shallow clone would build something calling itself v2026.9.1 forever.
     # blob:none keeps it cheap while still carrying the full commit graph.
     as_svc git clone --filter=blob:none --branch "$CLIP_REF" "$CLIP_REPO" "$SRC_DIR"
     ok "cloned to $SRC_DIR"
@@ -550,11 +550,12 @@ build_src() {
   as_svc sh -c "cd '$SRC_DIR/web' && rm -rf node_modules && npm ci --no-audit --no-fund"
   as_svc sh -c "cd '$SRC_DIR/web' && npm run build"
 
-  # Stamp the version: the patch number is the commit count, which only exists
-  # here at build time. `make build-go` does the same thing.
-  patch="$(as_svc node "$SRC_DIR/scripts/version.mjs" --patch 2>/dev/null || echo 0)"
+  # Stamp the version: the release line and the patch number both come out of
+  # the checkout's git history, which only exists here at build time.
+  # `make build-go` does the same thing.
+  version_flags="$(as_svc node "$SRC_DIR/scripts/version.mjs" --ldflags 2>/dev/null || true)"
   as_svc go -C "$SRC_DIR" build -trimpath \
-      -ldflags "-s -w -X github.com/chinmay28/clip-manager/internal/version.Patch=${patch}" \
+      -ldflags "-s -w ${version_flags}" \
       -o "$STAGED_BIN" ./cmd/clip
 }
 
@@ -670,8 +671,8 @@ CLIPSEOF
 write_unit() {
   cat > "$UNIT_PATH" <<UNIT
 [Unit]
-Description=Clip Manager — view security-camera clips and keep their directory in budget
-Documentation=https://github.com/chinmay28/clip-manager
+Description=Clip Hanger — view security-camera clips and keep their directory in budget
+Documentation=https://github.com/chinmay28/clip-hanger
 After=network-online.target
 Wants=network-online.target
 
@@ -800,7 +801,7 @@ fi
 
 cat <<DONE
 
-${C_GREEN}Clip Manager $verb and running.${C_OFF}
+${C_GREEN}Clip Hanger $verb and running.${C_OFF}
 
   $reach_line
   Clips:       $(printf '%s' "$CLIPS_DIRS" | sed 's/:/, /g')   (one subdirectory per camera)

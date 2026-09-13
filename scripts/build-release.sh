@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build-release.sh — Build Clip Manager release binaries for all platforms.
+# build-release.sh — Build Clip Hanger release binaries for all platforms.
 #
 # Usage:
 #   ./scripts/build-release.sh [version]
@@ -15,20 +15,20 @@
 
 set -euo pipefail
 
-# vYEAR.MONTH.PATCH with PATCH = the repo's commit count; scripts/version.mjs
-# is the single place that is assembled, so the binary, the embedded web client
-# and the release filenames can never disagree. Pass a version to override.
+# vYEAR.MONTH.PATCH, all three read from git; scripts/version.mjs is the single
+# place that is assembled, so the binary, the embedded web client and the
+# release filenames can never disagree. Pass a version to override the names.
 VERSION="${1:-$(node "$(dirname "$0")/version.mjs")}"
 PATCH="$(node "$(dirname "$0")/version.mjs" --patch)"
 DIST="dist"
-LDFLAGS="-s -w -X github.com/chinmay28/clip-manager/internal/version.Patch=${PATCH}"
+LDFLAGS="-s -w $(node "$(dirname "$0")/version.mjs" --ldflags)"
 
 if [[ "${PATCH}" == "0" ]]; then
     echo "warn: patch number is 0 — this is an unstamped build, not a release." >&2
     echo "      A shallow clone does this; fetch --unshallow for the real count." >&2
 fi
 
-echo "==> Clip Manager release build  version=${VERSION}"
+echo "==> Clip Hanger release build  version=${VERSION}"
 
 # ── 1. Frontend ──────────────────────────────────────────────────────────────
 echo "==> Building React frontend…"

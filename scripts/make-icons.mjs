@@ -10,10 +10,10 @@
  * out; never hand-edit the PNGs.
  *
  * No dependencies, deliberately. Pulling a rasteriser into the toolchain to
- * redraw five rectangles would cost more than drawing them: each shape is a
- * rounded rectangle, which has an exact distance function, so coverage per
- * pixel is arithmetic and the PNG is zlib plus four chunk headers. Node's
- * standard library has everything needed.
+ * redraw a dozen shapes would cost more than drawing them: the mark is rounded
+ * rectangles and round-capped line segments, and both have an exact distance
+ * function, so coverage per pixel is arithmetic and the PNG is zlib plus four
+ * chunk headers. Node's standard library has everything needed.
  *
  * Usage:
  *   node scripts/make-icons.mjs           # write the PNGs
@@ -40,9 +40,9 @@ const source = join(publicDir, 'icon.svg')
  *  - `inset` shrinks the artwork inside a full-bleed background for Android's
  *    maskable icons, where the launcher may crop anything outside a circle
  *    80% of the icon's width — so nothing may sit further than 40% of the
- *    width from the centre. The mark's border corners sit at 48%, which a
- *    round or squircle mask would clip, so the artwork comes in until they
- *    clear the safe zone with room to spare.
+ *    width from the centre. The outer corners of the hanging clips sit at
+ *    50%, which a round or squircle mask would clip, so the artwork comes in
+ *    until they clear the safe zone with room to spare.
  *  - The plain `any` icons keep the SVG's own rounded square on transparency,
  *    for the browsers and launchers that place an icon without masking it.
  */
@@ -58,14 +58,14 @@ const VARIANTS = [
 // ---------------------------------------------------------------------------
 
 /**
- * Pulls the rectangles out of icon.svg, in paint order.
+ * Pulls the shapes out of icon.svg, in paint order.
  *
  * This understands the handful of SVG the mark actually uses — <rect> with a
- * corner radius, a fill or a stroke, and fills inherited from an enclosing
- * <g>. It is not an SVG parser and is not trying to be: if the mark ever grows
- * a shape this cannot express, this script must fail loudly rather than
- * quietly render something that is no longer the logo, which is what the
- * unknown-element check at the end is for.
+ * corner radius, <line> with a round cap, a fill or a stroke, and paint
+ * attributes inherited from an enclosing <g>. It is not an SVG parser and is
+ * not trying to be: if the mark ever grows a shape this cannot express, this
+ * script must fail loudly rather than quietly render something that is no
+ * longer the logo, which is what the unknown-element check below is for.
  */
 function readMark(svg) {
   const viewBox = /viewBox="0 0 (\d+) (\d+)"/.exec(svg)
@@ -74,47 +74,83 @@ function readMark(svg) {
   if (w !== h) throw new Error(`icon.svg: viewBox ${w}x${h} is not square`)
 
   const body = svg.replace(/<!--[\s\S]*?-->/g, '').replace(/<svg[^>]*>|<\/svg>/g, '')
-  const rects = []
+  const shapes = []
   const groups = []
+
+  // Paint is what a <g> is used for here, so paint is what it passes down.
+  const painted = (tag, name, fallback) =>
+    attr(tag, name) ?? groups.findLast((g) => g[name] !== undefined)?.[name] ?? fallback
+  const paintedNum = (tag, name, fallback) => {
+    const raw = painted(tag, name, undefined)
+    return raw === undefined ? fallback : Number(raw)
+  }
 
   for (const [tag] of body.matchAll(/<[^>]+>/g)) {
     if (/^<g[\s>]/.test(tag)) {
-      groups.push(attr(tag, 'fill') ?? inheritedFill(groups))
+      groups.push(Object.fromEntries(
+        INHERITED.map((name) => [name, attr(tag, name)]).filter(([, v]) => v !== undefined)))
       continue
     }
     if (/^<\/g>/.test(tag)) {
       groups.pop()
       continue
     }
-    if (!/^<rect[\s>]/.test(tag)) {
-      throw new Error(`icon.svg: ${tag.slice(0, 40)} is not a shape this script can draw`)
+
+    const stroke = painted(tag, 'stroke', null)
+    const common = {
+      stroke: stroke === 'none' ? null : stroke,
+      strokeWidth: paintedNum(tag, 'stroke-width', 0),
+      opacity: paintedNum(tag, 'opacity', 1),
     }
 
-    const fill = attr(tag, 'fill') ?? inheritedFill(groups)
-    rects.push({
-      x: num(tag, 'x', 0),
-      y: num(tag, 'y', 0),
-      w: num(tag, 'width', 0),
-      h: num(tag, 'height', 0),
-      r: num(tag, 'rx', 0),
-      fill: fill === 'none' ? null : fill,
-      stroke: attr(tag, 'stroke') ?? null,
-      strokeWidth: num(tag, 'stroke-width', 0),
-      opacity: num(tag, 'opacity', 1),
-    })
+    if (/^<rect[\s>]/.test(tag)) {
+      const fill = painted(tag, 'fill', null)
+      shapes.push({
+        kind: 'rect',
+        x: paintedNum(tag, 'x', 0),
+        y: paintedNum(tag, 'y', 0),
+        w: paintedNum(tag, 'width', 0),
+        h: paintedNum(tag, 'height', 0),
+        r: paintedNum(tag, 'rx', 0),
+        fill: fill === 'none' ? null : fill,
+        ...common,
+      })
+      continue
+    }
+
+    if (/^<line[\s>]/.test(tag)) {
+      // The segment distance below is measured to the centre line, so the
+      // stroke it grows into is round-capped by construction. A butt or square
+      // cap would be a different shape, and silently drawing the wrong one is
+      // exactly the failure this script refuses to make.
+      const cap = painted(tag, 'stroke-linecap', 'round')
+      if (cap !== 'round') {
+        throw new Error(`icon.svg: stroke-linecap="${cap}" is not a cap this script can draw`)
+      }
+      if (!common.stroke || !(common.strokeWidth > 0)) {
+        throw new Error('icon.svg: a <line> with no stroke draws nothing')
+      }
+      shapes.push({
+        kind: 'line',
+        x1: paintedNum(tag, 'x1', 0),
+        y1: paintedNum(tag, 'y1', 0),
+        x2: paintedNum(tag, 'x2', 0),
+        y2: paintedNum(tag, 'y2', 0),
+        ...common,
+      })
+      continue
+    }
+
+    throw new Error(`icon.svg: ${tag.slice(0, 40)} is not a shape this script can draw`)
   }
 
-  if (!rects.length) throw new Error('icon.svg: nothing to draw')
-  return { grid: Number(w), rects }
+  if (!shapes.length) throw new Error('icon.svg: nothing to draw')
+  return { grid: Number(w), shapes }
 }
 
 const attr = (tag, name) => new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1]
-const num = (tag, name, fallback) => {
-  const raw = attr(tag, name)
-  return raw === undefined ? fallback : Number(raw)
-}
-// Fill is the only property the mark inherits from a group.
-const inheritedFill = (groups) => groups[groups.length - 1]
+// The properties a shape may take from an enclosing <g>.
+const INHERITED = ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'opacity']
 
 // ---------------------------------------------------------------------------
 // Drawing
@@ -132,6 +168,23 @@ function roundedRectDistance(px, py, cx, cy, halfW, halfH, radius) {
   const qy = Math.abs(py - cy) - (halfH - r)
   const outside = Math.hypot(Math.max(qx, 0), Math.max(qy, 0))
   return outside + Math.min(Math.max(qx, qy), 0) - r
+}
+
+/**
+ * Distance from a point to a line segment, in the same units as the segment.
+ * Growing the stroke out of this gives round caps and round joins for free,
+ * which is the only cap readMark accepts.
+ */
+function segmentDistance(px, py, ax, ay, bx, by) {
+  const dx = bx - ax
+  const dy = by - ay
+  const length2 = dx * dx + dy * dy
+  // A zero-length segment is a single point, and the projection below would
+  // divide by zero; the distance to it is just the distance to that point.
+  const t = length2 === 0
+    ? 0
+    : Math.min(Math.max(((px - ax) * dx + (py - ay) * dy) / length2, 0), 1)
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
 }
 
 /** How much of a pixel a shape covers, given the distance to its edge. */
@@ -167,34 +220,47 @@ function render(mark, { size, plate, inset = 1 }) {
   const pixels = new Uint8Array(size * size * 4)
   const scale = size / mark.grid
   const centre = mark.grid / 2
+  // Pulls a coordinate towards the centre of the grid, then onto the canvas —
+  // how the maskable variant brings the artwork inside its safe zone.
+  const place = (v, shrink) => (centre + (v - centre) * shrink) * scale
 
-  for (const rect of mark.rects) {
+  for (const shape of mark.shapes) {
+    if (shape.kind === 'line') {
+      const ax = place(shape.x1, inset)
+      const ay = place(shape.y1, inset)
+      const bx = place(shape.x2, inset)
+      const by = place(shape.y2, inset)
+      // A stroke straddles the path: half its width falls either side.
+      const half = (shape.strokeWidth * inset * scale) / 2
+      paint(pixels, size, shape.stroke, shape.opacity, (px, py) =>
+        segmentDistance(px, py, ax, ay, bx, by) - half)
+      continue
+    }
+
     // The rectangle that covers the whole viewBox is the background plate:
     // it is the one variants reshape, and the one the artwork sits inside.
-    const isPlate = rect.w >= mark.grid && rect.h >= mark.grid
+    const isPlate = shape.w >= mark.grid && shape.h >= mark.grid
     const shrink = isPlate ? 1 : inset
 
-    const x = centre + (rect.x - centre) * shrink
-    const y = centre + (rect.y - centre) * shrink
-    const w = rect.w * shrink
-    const h = rect.h * shrink
-    const radius = (isPlate && plate === 'square' ? 0 : rect.r) * shrink
+    const w = shape.w * shrink
+    const h = shape.h * shrink
+    const radius = (isPlate && plate === 'square' ? 0 : shape.r) * shrink
 
-    const cx = (x + w / 2) * scale
-    const cy = (y + h / 2) * scale
+    const cx = place(shape.x, shrink) + (w / 2) * scale
+    const cy = place(shape.y, shrink) + (h / 2) * scale
     const halfW = (w / 2) * scale
     const halfH = (h / 2) * scale
     const r = radius * scale
 
-    if (rect.fill) {
-      paint(pixels, size, rect.fill, rect.opacity, (px, py) =>
+    if (shape.fill) {
+      paint(pixels, size, shape.fill, shape.opacity, (px, py) =>
         roundedRectDistance(px, py, cx, cy, halfW, halfH, r))
     }
-    if (rect.stroke && rect.strokeWidth > 0) {
-      // A stroke straddles the path: half its width falls either side, which
-      // is the absolute distance to the edge minus that half-width.
-      const half = (rect.strokeWidth * shrink * scale) / 2
-      paint(pixels, size, rect.stroke, rect.opacity, (px, py) =>
+    if (shape.stroke && shape.strokeWidth > 0) {
+      // Same half-width either side of the edge, so the ring a stroked rect
+      // draws is the absolute distance to that edge minus the half-width.
+      const half = (shape.strokeWidth * shrink * scale) / 2
+      paint(pixels, size, shape.stroke, shape.opacity, (px, py) =>
         Math.abs(roundedRectDistance(px, py, cx, cy, halfW, halfH, r)) - half)
     }
   }

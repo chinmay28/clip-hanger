@@ -30,9 +30,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chinmay28/clip-manager/internal/clips"
-	"github.com/chinmay28/clip-manager/internal/storage"
-	"github.com/chinmay28/clip-manager/internal/version"
+	"github.com/chinmay28/clip-hanger/internal/clips"
+	"github.com/chinmay28/clip-hanger/internal/storage"
+	"github.com/chinmay28/clip-hanger/internal/version"
 )
 
 // The built web client, compiled in so the binary is the whole deployment.
