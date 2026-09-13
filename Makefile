@@ -24,15 +24,15 @@ else
 BUILD_OUT := clip
 endif
 
-# The patch number is the repo's commit count, which only exists at build time —
-# stamp it in (see internal/version and scripts/version.mjs). A bare `go build`
-# leaves it at 0, which reads as "unstamped development build".
-VERSION_PKG := github.com/chinmay28/clip-hanger/internal/version
-PATCH := $(shell node scripts/version.mjs --patch 2>/dev/null || echo 0)
+# The year, month and patch the binary reports all come from git, which only
+# exists at build time — scripts/version.mjs turns them into the -X flags that
+# stamp them in (see internal/version). With no node to ask, the flags come out
+# empty and the build calls itself v0.0.0: an unstamped development build.
+VERSION_FLAGS := $(shell node scripts/version.mjs --ldflags 2>/dev/null)
 
 build-go:
 	CGO_ENABLED=0 go build -trimpath \
-		-ldflags="-s -w -X $(VERSION_PKG).Patch=$(PATCH)" \
+		-ldflags="-s -w $(VERSION_FLAGS)" \
 		-o $(BUILD_OUT) ./cmd/clip
 
 # Print the version this tree would build as

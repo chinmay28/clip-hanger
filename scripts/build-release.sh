@@ -15,13 +15,13 @@
 
 set -euo pipefail
 
-# vYEAR.MONTH.PATCH with PATCH = the repo's commit count; scripts/version.mjs
-# is the single place that is assembled, so the binary, the embedded web client
-# and the release filenames can never disagree. Pass a version to override.
+# vYEAR.MONTH.PATCH, all three read from git; scripts/version.mjs is the single
+# place that is assembled, so the binary, the embedded web client and the
+# release filenames can never disagree. Pass a version to override the names.
 VERSION="${1:-$(node "$(dirname "$0")/version.mjs")}"
 PATCH="$(node "$(dirname "$0")/version.mjs" --patch)"
 DIST="dist"
-LDFLAGS="-s -w -X github.com/chinmay28/clip-hanger/internal/version.Patch=${PATCH}"
+LDFLAGS="-s -w $(node "$(dirname "$0")/version.mjs" --ldflags)"
 
 if [[ "${PATCH}" == "0" ]]; then
     echo "warn: patch number is 0 — this is an unstamped build, not a release." >&2

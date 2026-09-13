@@ -523,7 +523,7 @@ else
     install -d -o "$SVC_USER" -g "$SVC_USER" -m 755 "$PREFIX"
     log "cloning $CLIP_REPO…"
     # NOT --depth 1: the version's patch number is the commit count, so a
-    # shallow clone would build something calling itself v2026.8.1 forever.
+    # shallow clone would build something calling itself v2026.9.1 forever.
     # blob:none keeps it cheap while still carrying the full commit graph.
     as_svc git clone --filter=blob:none --branch "$CLIP_REF" "$CLIP_REPO" "$SRC_DIR"
     ok "cloned to $SRC_DIR"
@@ -550,11 +550,12 @@ build_src() {
   as_svc sh -c "cd '$SRC_DIR/web' && rm -rf node_modules && npm ci --no-audit --no-fund"
   as_svc sh -c "cd '$SRC_DIR/web' && npm run build"
 
-  # Stamp the version: the patch number is the commit count, which only exists
-  # here at build time. `make build-go` does the same thing.
-  patch="$(as_svc node "$SRC_DIR/scripts/version.mjs" --patch 2>/dev/null || echo 0)"
+  # Stamp the version: the release line and the patch number both come out of
+  # the checkout's git history, which only exists here at build time.
+  # `make build-go` does the same thing.
+  version_flags="$(as_svc node "$SRC_DIR/scripts/version.mjs" --ldflags 2>/dev/null || true)"
   as_svc go -C "$SRC_DIR" build -trimpath \
-      -ldflags "-s -w -X github.com/chinmay28/clip-hanger/internal/version.Patch=${patch}" \
+      -ldflags "-s -w ${version_flags}" \
       -o "$STAGED_BIN" ./cmd/clip
 }
 

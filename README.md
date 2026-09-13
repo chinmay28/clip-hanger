@@ -75,7 +75,7 @@ curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/
 ```
 
 The download's checksum is verified before anything is swapped in, and
-`CLIP_RELEASE=v2026.8.42` pins a specific release instead of the latest.
+`CLIP_RELEASE=v2026.9.42` pins a specific release instead of the latest.
 Releases publish **`linux/amd64`** and **`linux/arm64`**; anything else builds
 from source (the default), which works everywhere. Both modes install the same
 thing — one static binary with the web client embedded, under the same unit
@@ -318,30 +318,30 @@ Output is `clip` on Linux/macOS, `clip.exe` on Windows.
 ### Versioning
 
 `vYEAR.MONTH.PATCH` — a calendar version, where **the patch number is the
-repository's commit count** — so `v2026.8.42` is the 42nd commit on the 2026.8
-line. There is no semantic major/minor: the leading numbers say *when* a
-release line opened, not what it promises about compatibility. Breaking
-changes are called out in [`CHANGELOG.md`](./CHANGELOG.md), which is the thing
-to read before upgrading.
+repository's commit count** — so `v2026.9.42` is the 42nd commit, made in
+September 2026. There is no semantic major/minor: the leading numbers say
+*when* the code was written, not what it promises about compatibility.
+Breaking changes are called out in [`CHANGELOG.md`](./CHANGELOG.md), which is
+the thing to read before upgrading.
 
-- `YEAR`/`MONTH` are source constants in
-  [`internal/version/version.go`](./internal/version/version.go). Bump them by
-  hand when a release line opens — they are deliberately not read from the
-  build clock, so rebuilding an old tree still reports what it originally
-  shipped.
-- The month is not zero-padded (`v2026.8.42`, not `v2026.08.42`): semver
+- `YEAR`/`MONTH` are **the commit date of `HEAD`**, so the release line follows
+  the calendar with nothing to bump by hand. The commit clock rather than the
+  build clock, deliberately: the same tree builds to the same version whenever
+  it is built, two machines building one commit agree, and a rebuilt release
+  still matches its tag.
+- The month is not zero-padded (`v2026.9.42`, not `v2026.09.42`): semver
   forbids a leading zero, and an unpadded month keeps every tag something a
   semver parser will accept.
-- `PATCH` only exists at build time, so it is stamped in: `-ldflags -X` for
-  the Go binary, Vite's `define` for the web bundle. Both read
-  [`scripts/version.mjs`](./scripts/version.mjs), so the header,
+- None of the three exists inside a compiled binary, so all three are stamped
+  in: `-ldflags -X` for the Go binary, Vite's `define` for the web bundle. Both
+  read [`scripts/version.mjs`](./scripts/version.mjs), so the header,
   `clip version` and `/api/health` can never disagree.
 
-A patch of `0` means an unstamped build — no git, or a **shallow clone**,
-which `version.mjs` detects and refuses to guess around rather than shipping a
-build that quietly calls itself `v2026.8.1`. Anything building a release needs
-the full commit graph (`fetch-depth: 0`, or `--filter=blob:none` rather than
-`--depth 1`).
+`v0.0.0` means an unstamped build — no git and no node to ask. A patch of `0`
+on its own means a **shallow clone**, which `version.mjs` detects and refuses
+to guess around rather than shipping a build that quietly calls itself
+`v2026.9.1`. Anything building a release needs the full commit graph
+(`fetch-depth: 0`, or `--filter=blob:none` rather than `--depth 1`).
 
 ---
 
@@ -354,7 +354,7 @@ clip-hanger/
 │   ├── clips/                   # the directory walk: clips, channels, playability, the scan cache
 │   ├── storage/                 # quotas: config, usage, oldest-first enforcement
 │   ├── server/                  # JSON API + embedded SPA (dist/ is committed)
-│   └── version/                 # YEAR/MONTH; PATCH stamped at link time
+│   └── version/                 # vYEAR.MONTH.PATCH, all stamped at link time
 ├── web/
 │   ├── src/                     # React client: App, theme, api
 │   │   └── components/Brand.jsx # the wordmark + the developer badge

@@ -1,14 +1,29 @@
 # Changelog
 
-Releases are `vYEAR.MONTH.PATCH` — a calendar version, where the patch number
-is the repository's commit count, so `v2026.8.42` is the 42nd commit on the
-2026.8 line. See [`internal/version/version.go`](./internal/version/version.go).
+Releases are `vYEAR.MONTH.PATCH` — a calendar version, where the leading
+numbers are the month `HEAD` was committed in and the patch number is the
+repository's commit count, so `v2026.9.42` is the 42nd commit, made in
+September 2026. See [`internal/version/version.go`](./internal/version/version.go).
 
 Each section below is the body of the corresponding GitHub release. A heading
 must name the tag exactly — a tag whose commit builds a different version is a
 tag that shouldn't be published.
 
-## Unreleased — the 2026.8 line
+## Unreleased — the 2026.9 line
+
+### The release line follows the calendar on its own
+
+`YEAR.MONTH` used to be a pair of constants in the Go source, bumped by hand
+when a release line opened — and, as constants do, they sat at `2026.8` well
+into September. They are now read from the commit date of `HEAD`, so the line
+moves with the work and there is nothing left to forget.
+
+It is the commit clock, not the build clock: the same tree still builds to the
+same version whenever it is built, two machines building one commit still
+agree, and a rebuilt release still matches its tag. All three numbers now come
+from git and are stamped at link time, which `scripts/version.mjs --ldflags`
+assembles for every build site at once — so a build can no longer stamp two of
+the three. A binary built with none of it calls itself `v0.0.0`.
 
 ### Clip Manager is now Clip Hanger
 
