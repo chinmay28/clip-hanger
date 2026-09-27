@@ -49,6 +49,20 @@ curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/
 
 (or, from a checkout: `sudo ./scripts/quickstart.sh`)
 
+To uninstall, run the same command with `--uninstall`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/quickstart.sh | sudo bash -s -- --uninstall
+```
+
+It stops and disables the service and removes its systemd unit and everything
+under `/opt/clip` (the binary and, for a source install, the build tree). It
+keeps `/var/lib/clip` — the quota config and its backups — and never touches a
+clips directory, including the default one inside it; it finishes by printing
+the command that deletes the rest, and the `clip` user, if you want them gone.
+Toolchains it may have installed (Node, Go, ffmpeg) stay. Running it when
+nothing is installed is harmless.
+
 It installs Node 22 and Go if needed (both build-time only), creates a
 dedicated `clip` system user, compiles the web client and the static server
 binary, and runs it under systemd on `http://<host>:8124`, reachable from your
