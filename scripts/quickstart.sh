@@ -6,6 +6,12 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/quickstart.sh | sudo bash
 #
+# and the same command with a flag takes it away again — the service, its
+# unit and the installed binary go; the quota config, the backups and every
+# clips directory stay:
+#
+#   curl -fsSL https://raw.githubusercontent.com/chinmay28/clip-hanger/main/scripts/quickstart.sh | sudo bash -s -- --uninstall
+#
 # Two ways to get the binary — CLIP_INSTALL picks one:
 #
 #   source   (default) clone the repo and build it here. Needs Node and Go at
@@ -132,6 +138,14 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 command -v systemctl >/dev/null 2>&1 || die "systemd is required (no systemctl found)."
 
+# Parsed before anything else happens, so an uninstall never installs a
+# toolchain, clones or downloads on its way to removing things.
+case "${1:-}" in
+  --uninstall) UNINSTALL=1 ;;
+  "")          UNINSTALL=0 ;;
+  *)           die "Unknown option: $1 (only --uninstall is supported)" ;;
+esac
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -200,6 +214,54 @@ SRC_DIR="$PREFIX/src"
 BUILD_HOME="$PREFIX/.build-home"
 CONFIG_PATH="$DATA_DIR/config.json"
 BACKUP_DIR="$DATA_DIR/backups"
+
+# ---------------------------------------------------------------------------
+# Uninstall
+# ---------------------------------------------------------------------------
+# Undoes what an install put on the machine, from the same resolved paths, and
+# nothing else. The data directory stays — it holds the quota config and its
+# backups, and by default the clips directory too — and so does every clips
+# source, which this script has never written into and is not about to start
+# deleting from. Node, Go and ffmpeg stay as well: they may have been here
+# before us, and other things on the box may be building with them.
+if [ "$UNINSTALL" -eq 1 ]; then
+  log "Uninstalling Clip Hanger"
+  case "$PREFIX" in
+    "" | / ) die "CLIP_PREFIX is '$PREFIX' — refusing to remove that." ;;
+  esac
+
+  # The unit names the binary it ran. Usually that is under $PREFIX and goes
+  # with it; an install built from a checkout ran $checkout/clip instead, and
+  # only the binaries the installer left there are removed — never the tree.
+  unit_bin="${PRIOR_EXEC%% *}"
+
+  systemctl disable --now "${SERVICE_NAME}.service" >/dev/null 2>&1 || true
+  rm -f "$UNIT_PATH"
+  rm -rf "/etc/systemd/system/${SERVICE_NAME}.service.d"
+  systemctl daemon-reload
+  systemctl reset-failed "${SERVICE_NAME}.service" >/dev/null 2>&1 || true
+  ok "service stopped and removed"
+
+  if [ -n "$unit_bin" ] && [ "${unit_bin#"$PREFIX"/}" = "$unit_bin" ]; then
+    rm -f "$unit_bin" "$unit_bin.prev" "$unit_bin.new"
+    ok "removed $unit_bin (the checkout itself is left alone)"
+  fi
+  rm -rf "$PREFIX"
+  ok "removed $PREFIX"
+
+  echo
+  log "Removed. Your config and backups are still at $DATA_DIR."
+  # The default clips directory lives inside the data directory, so the
+  # obvious rm -rf would take footage with it. Offer one that spares it.
+  if [ -d "$DATA_DIR/clips" ]; then
+    warn "$DATA_DIR/clips is a clips directory — footage. It has been kept."
+    log "Delete everything else with: sudo find $DATA_DIR -mindepth 1 -maxdepth 1 ! -name clips -exec rm -rf {} + && sudo userdel $SVC_USER"
+    log "(and, only if you want the footage gone too: sudo rm -rf $DATA_DIR)"
+  else
+    log "Delete it with: sudo rm -rf $DATA_DIR && sudo userdel $SVC_USER"
+  fi
+  exit 0
+fi
 
 # Minimum Go release that can bootstrap the build; the go directive in go.mod
 # pins the real toolchain, which Go fetches automatically.

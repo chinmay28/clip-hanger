@@ -11,6 +11,13 @@ tag that shouldn't be published.
 
 ## Unreleased — the 2026.9 line
 
+### Uninstall is the install command with a flag
+
+`curl -fsSL …/quickstart.sh | sudo bash -s -- --uninstall` stops the service
+and removes its unit and `/opt/clip`, keeping the quota config, its backups and
+every clips directory, then prints how to delete what it kept. It is safe to
+run twice, and it installs, clones and downloads nothing on the way.
+
 ### The release line follows the calendar on its own
 
 `YEAR.MONTH` used to be a pair of constants in the Go source, bumped by hand
