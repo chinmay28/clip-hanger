@@ -246,8 +246,15 @@ if [ "$UNINSTALL" -eq 1 ]; then
     rm -f "$unit_bin" "$unit_bin.prev" "$unit_bin.new"
     ok "removed $unit_bin (the checkout itself is left alone)"
   fi
-  rm -rf "$PREFIX"
-  ok "removed $PREFIX"
+  # Only what an install puts under the prefix, then the prefix if that
+  # empties it: CLIP_DATA_DIR or a clips source may have been pointed inside
+  # it, and a wholesale rm -rf would take the footage with it.
+  rm -rf "${PREFIX:?}/src" "${PREFIX:?}/bin" "$BUILD_HOME"
+  if rmdir "$PREFIX" 2>/dev/null || [ ! -e "$PREFIX" ]; then
+    ok "removed $PREFIX"
+  else
+    warn "kept $PREFIX — it still holds files this installer did not put there."
+  fi
 
   echo
   log "Removed. Your config and backups are still at $DATA_DIR."
