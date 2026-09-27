@@ -377,7 +377,7 @@ clip-hanger/
 │   ├── fonts/                   # the wordmark's script face (subset + OFL)
 │   └── build-version.js         # feeds the version into the bundle
 ├── scripts/
-│   ├── quickstart.sh            # one-command systemd install / upgrade / rollback
+│   ├── quickstart.sh            # one-command systemd install / upgrade / rollback / uninstall
 │   ├── version.mjs              # the one place the version is assembled
 │   ├── make-icons.mjs           # redraws the home-screen PNGs from icon.svg
 │   ├── make-wordmark-font.py    # cuts the wordmark's script face down
