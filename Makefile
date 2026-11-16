@@ -1,4 +1,4 @@
-.PHONY: build build-web build-go icons icons-check version release test test-cover clean dev
+.PHONY: build build-web build-go icons icons-check version release test test-go test-web test-cover android clean dev
 
 # Build everything: frontend + Go binary
 build: build-web build-go
@@ -43,9 +43,23 @@ version:
 release: build-web
 	./scripts/build-release.sh
 
-# Run all Go unit tests
-test:
+# Run every test: the Go packages and the web client's
+test: test-go test-web
+
+test-go:
 	go test -count=1 ./...
+
+# The web client's own tests (vitest) — among them, that the Android app's
+# native-player hook does nothing in a plain browser.
+test-web:
+	cd web && { [ -d node_modules ] || npm ci; } && npm test
+
+# The Android app (apps/android): its JVM tests, lint and a release APK,
+# stamped with this tree's version. Needs a JDK 17+ and the Android SDK.
+ANDROID_VERSION_FLAGS = -PappVersionName=$(shell node scripts/version.mjs 2>/dev/null || echo dev) \
+	-PappVersionCode=$(shell node scripts/version.mjs --patch 2>/dev/null || echo 1)
+android:
+	cd apps/android && ./gradlew --no-daemon :core:test :app:lintDebug :app:assembleRelease $(ANDROID_VERSION_FLAGS)
 
 # Run Go tests with coverage report
 test-cover:

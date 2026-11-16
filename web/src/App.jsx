@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { api, clipURL, playURL } from './api'
+import { api, clipURL } from './api'
+import { appSettings, playAttempts, playNatively } from './nativeApp'
 import { COLORS, FONT, formatBytes } from './theme'
 import { Brand, DevMark } from './components/Brand'
 
@@ -13,6 +14,15 @@ export function App() {
   const [sources, setSources] = useState(null)
   const [error, setError] = useState(null)
   const [playing, setPlaying] = useState(null)
+
+  // Inside the Android app a clip plays in its native player, with the rest
+  // of its hour to step through; in a browser (no window.cliphangerApp)
+  // playNatively declines and the page's own player opens, as it always has.
+  const play = useCallback((clip, context = {}) => {
+    const fallback = () => setPlaying(clip)
+    if (!playNatively(clip, { ...context, onFail: fallback })) fallback()
+  }, [])
+  const openAppSettings = appSettings()
 
   // Settings' data only. The clip browser fetches for itself, one day at a
   // time — the whole point of the summary API is that opening the app does
@@ -54,6 +64,16 @@ export function App() {
           <Tab active={tab === 'clips'} onClick={() => setTab('clips')}>Clips</Tab>
           <Tab active={tab === 'settings'} onClick={() => setTab('settings')}>Settings</Tab>
         </nav>
+        {openAppSettings && (
+          // Only inside the Android app: its own settings (which server).
+          <button
+            type="button"
+            onClick={openAppSettings}
+            title="App settings"
+            aria-label="App settings"
+            style={{ ...buttonStyle(), padding: '6px 10px' }}
+          >⚙</button>
+        )}
         <DevMark />
       </header>
 
@@ -71,7 +91,7 @@ export function App() {
 
         {tab === 'clips' && (
           <ClipBrowser
-            onPlay={setPlaying}
+            onPlay={play}
             // Naming the source on every row only earns its ink once there
             // is more than one place a clip could have come from.
             showSource={(sources || []).length > 1}
@@ -729,7 +749,12 @@ function ClipBrowser({ onPlay, showSource }) {
           bytes={bytes}
           open={open.has(hour)}
           onToggle={() => toggleHour(hour)}
-          onPlay={onPlay}
+          // The hour is the native player's playlist: next and previous
+          // step through the recordings either side of this one.
+          onPlay={(clip) => onPlay(clip, {
+            neighbours: hourClips,
+            describe: (c) => channelName(c.channel, labels),
+          })}
           showSource={showSource}
           // Inside a filtered channel every row would repeat the chip above
           // it; only the "All" view needs the name per row.
@@ -997,15 +1022,7 @@ function ClipRow({ clip, onPlay, showSource, channelName }) {
    a black rectangle. */
 function Player({ clip, onClose }) {
   // Every URL worth trying, in order. Each onError steps down one rung.
-  const attempts = useMemo(() => {
-    const list = []
-    if (clip.playable) list.push(clipURL(clip))
-    if (clip.playable || clip.remuxable) {
-      list.push(playURL(clip))
-      list.push(playURL(clip, true))
-    }
-    return list.length > 0 ? list : [clipURL(clip)]
-  }, [clip])
+  const attempts = useMemo(() => playAttempts(clip), [clip])
   const [attempt, setAttempt] = useState(0)
   const failed = attempt >= attempts.length
 

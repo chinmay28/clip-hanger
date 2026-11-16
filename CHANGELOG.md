@@ -1,15 +1,78 @@
 # Changelog
 
 Releases are `vYEAR.MONTH.PATCH` — a calendar version, where the leading
-numbers are the month `HEAD` was committed in and the patch number is the
-repository's commit count, so `v2026.9.42` is the 42nd commit, made in
-September 2026. See [`internal/version/version.go`](./internal/version/version.go).
+numbers are the month `HEAD` was committed in (its committer date, in the
+committer's own timezone) and the patch number is the repository's commit
+count, so `v2026.9.42` is the 42nd commit, made in September 2026. Nobody
+bumps anything: [`scripts/version.mjs`](./scripts/version.mjs) reads all three
+from git, and every build — the binary, the web bundle, the Android app —
+is stamped from it.
 
-Each section below is the body of the corresponding GitHub release. A heading
-must name the tag exactly — a tag whose commit builds a different version is a
-tag that shouldn't be published.
+Each section below is the body of the corresponding GitHub release, and the
+heading is the gate: [`.github/workflows/release.yml`](./.github/workflows/release.yml)
+publishes a commit only when this file has a `## <version>` section naming
+exactly the version that commit builds. A push to `main` without one is an
+ordinary commit and is skipped; a tag or a manual run without one fails. So
+cutting a release is renaming `## Unreleased` to the version the release
+commit will build (`make version` on the commit before it, plus one) and
+pushing it. `Unreleased` never matches a version, so it can never publish by
+accident.
 
-## Unreleased — the 2026.9 line
+## v2026.11.8
+
+**Downloads:** the server binaries as before (`clip-<version>-linux-amd64`,
+`-linux-arm64`, `-darwin-*`, `-windows-amd64.exe`), and the Android app,
+**`clip-hanger.apk`** — always at
+<https://github.com/chinmay28/clip-hanger/releases/latest/download/clip-hanger.apk>.
+Every asset is in `SHA256SUMS`.
+
+### Clip Hanger for Android
+
+A phone app for your Clip Hanger server. It is the server's own web
+interface — channels, days, hours, labels, sources, quotas — in an app with
+its own icon, and it plays clips the way a phone should:
+
+- **A native player.** Play hands the clip to Media3 (the player SAND TV
+  uses) instead of the page's `<video>`: the phone's hardware decoders,
+  smooth scrubbing, landscape full screen for a landscape clip. **Previous**
+  and **next** step through the rest of that hour's recordings, and at the
+  end of one clip the next one starts, so an hour of short segments plays as
+  the hour it was. Each clip climbs the same ladder the page does — the file
+  as-is, the server's remux, its H.264 transcode — with one rung more:
+  `.mkv`, `.ts`, `.flv` and `.avi`, which no browser plays but the phone
+  does, go straight to the hardware decoders first, sparing the server the
+  ffmpeg run.
+- **Save and Share** a clip from the player: into *Downloads/Clip Hanger*,
+  or the share sheet (with *Save to Downloads* first in it). The page's own
+  Download links save there too.
+- **Find on this network.** The first screen looks for servers on the Wi-Fi
+  and lists what answers; or type the address (`192.168.1.20` means port
+  8124).
+- **A thin client, deliberately.** The footage lives on the machine your
+  cameras record to, and Clip Hanger runs there beside it. The app is a
+  window onto that server, not a second copy of it.
+
+In a browser nothing changes: the page offers the native player only when it
+finds itself inside the app (`window.cliphangerApp`), and its tests say so.
+
+See [the guide](./docs/android.md).
+
+### The server answers "Find on this network"
+
+`clip serve` answers the app's discovery broadcast on **UDP 8125** (the port
+after the web server's) with its port, hostname and version — nothing the web
+port does not already say to anyone who can reach it, and only to private,
+link-local and Tailscale addresses. It stays off when the server is bound to
+loopback (nobody who heard it could reach the address), and
+`--discovery=false` or `CLIP_DISCOVERY=off` turns it off;
+`--discovery-port` moves it.
+
+### `version.mjs --date`
+
+`node scripts/version.mjs --date` prints the release line as `YEAR-MM`, for
+builds that want it on its own. The month is now read from `%cI` — the
+committer date in the committer's timezone, which is what it was already;
+only the spelling changed.
 
 ### Uninstall is the install command with a flag
 

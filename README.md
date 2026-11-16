@@ -37,6 +37,14 @@ answer (persisted across restarts), served while a fresh walk runs behind
 it, with the response marked `stale` so the app quietly re-asks until the
 walk lands. Sources and quotas live behind the **Settings** tab.
 
+**On Android** there is an app: the same interface, with clips played by
+the phone's own hardware-decoding player — previous/next through the hour,
+landscape full screen, save and share — and *Find on this network* instead
+of typing an address. It is a client of the server on your NVR box, not a
+server itself. Download
+[`clip-hanger.apk`](https://github.com/chinmay28/clip-hanger/releases/latest/download/clip-hanger.apk);
+see the [Android guide](./docs/android.md).
+
 ---
 
 ## Quick start on Linux (Ubuntu / Raspberry Pi)
@@ -323,8 +331,9 @@ make build        # frontend + binary
 make build-web    # frontend only → internal/server/dist/
 make build-go     # binary only
 make version      # print the version this tree would build as
-make test         # Go unit tests
+make test         # Go unit tests + the web client's tests (vitest)
 make release      # cross-compile all platforms → dist/
+make android      # the Android app: JVM tests, lint, a release APK (needs the Android SDK)
 ```
 
 Output is `clip` on Linux/macOS, `clip.exe` on Windows.
@@ -338,7 +347,8 @@ September 2026. There is no semantic major/minor: the leading numbers say
 Breaking changes are called out in [`CHANGELOG.md`](./CHANGELOG.md), which is
 the thing to read before upgrading.
 
-- `YEAR`/`MONTH` are **the commit date of `HEAD`**, so the release line follows
+- `YEAR`/`MONTH` are **the commit date of `HEAD`** (its committer date, in
+  the committer's own timezone; `version.mjs --date` prints it), so the release line follows
   the calendar with nothing to bump by hand. The commit clock rather than the
   build clock, deliberately: the same tree builds to the same version whenever
   it is built, two machines building one commit agree, and a rebuilt release
@@ -349,7 +359,13 @@ the thing to read before upgrading.
 - None of the three exists inside a compiled binary, so all three are stamped
   in: `-ldflags -X` for the Go binary, Vite's `define` for the web bundle. Both
   read [`scripts/version.mjs`](./scripts/version.mjs), so the header,
-  `clip version` and `/api/health` can never disagree.
+  `clip version` and `/api/health` can never disagree. The Android app takes
+  the same string as its version name and the patch as its version code.
+
+Releases are published by [`.github/workflows/release.yml`](./.github/workflows/release.yml)
+when a commit's version has its own `## vX.Y.Z` section in the changelog:
+the binaries `scripts/build-release.sh` builds, `clip-hanger.apk`, and
+`SHA256SUMS`.
 
 `v0.0.0` means an unstamped build — no git and no node to ask. A patch of `0`
 on its own means a **shallow clone**, which `version.mjs` detects and refuses
@@ -363,14 +379,17 @@ to guess around rather than shipping a build that quietly calls itself
 
 ```
 clip-hanger/
+├── apps/android/                # the Android app (thin client + native player) — see its README
 ├── cmd/clip/                    # CLI: serve, prune, version
 ├── internal/
 │   ├── clips/                   # the directory walk: clips, channels, playability, the scan cache
+│   ├── discover/                # LAN discovery responder for the app's "Find on this network"
 │   ├── storage/                 # quotas: config, usage, oldest-first enforcement
 │   ├── server/                  # JSON API + embedded SPA (dist/ is committed)
 │   └── version/                 # vYEAR.MONTH.PATCH, all stamped at link time
 ├── web/
 │   ├── src/                     # React client: App, theme, api
+│   │   ├── nativeApp.js         # the Android app hook (inert in a browser)
 │   │   └── components/Brand.jsx # the wordmark + the developer badge
 │   ├── public/                  # app icon, home-screen icons + manifest,
 │   │                            #   developer badge
@@ -379,9 +398,11 @@ clip-hanger/
 ├── scripts/
 │   ├── quickstart.sh            # one-command systemd install / upgrade / rollback / uninstall
 │   ├── version.mjs              # the one place the version is assembled
-│   ├── make-icons.mjs           # redraws the home-screen PNGs from icon.svg
+│   ├── make-icons.mjs           # redraws the home-screen and Android launcher PNGs from icon.svg
 │   ├── make-wordmark-font.py    # cuts the wordmark's script face down
 │   └── build-release.sh         # cross-compile all platforms
+├── docs/android.md              # the Android app's guide
+├── .github/workflows/           # release.yml (binaries + clip-hanger.apk), android.yml
 ├── CHANGELOG.md                 # release notes, one section per tag
 ├── LICENSE                      # AGPL-3.0-only
 └── Makefile

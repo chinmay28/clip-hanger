@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Clip Hanger</string>
+    <string name="tagline">Your cameras\' footage, on your phone</string>
+    <string name="settings_title">App settings</string>
+    <string name="settings_short">Settings</string>
+    <string name="save_to_downloads">Save to Downloads</string>
+
+    <!-- First run -->
+    <string name="setup_intro">Clip Hanger runs on the machine your cameras record to — a Raspberry Pi, a NAS, a desktop. This app opens it, and plays clips in the phone\'s own video player. You can change the address later in the app\'s settings.</string>
+    <string name="setup_address">Server address</string>
+    <string name="setup_address_hint">e.g. 192.168.1.20 or nvr.local — port 8124 unless you changed it</string>
+    <string name="setup_find">Find on this network</string>
+    <string name="setup_finding">Looking…</string>
+    <string name="setup_found_item">%1$s — %2$s</string>
+    <string name="setup_found_none">No Clip Hanger server answered. Type its address instead (servers older than this app do not answer).</string>
+    <string name="setup_continue">Continue</string>
+    <string name="setup_version">Version %1$s</string>
+    <string name="dev_badge">Built by CM Hegday</string>
+
+    <!-- Main screen -->
+    <string name="connecting">Connecting to %1$s…</string>
+    <string name="cannot_reach">Cannot reach %1$s</string>
+    <string name="bad_certificate">%1$s has a certificate this phone does not trust. Install its CA in Android\'s settings, or connect over http on your own network.</string>
+    <string name="retry">Retry</string>
+    <string name="open_settings">App settings</string>
+
+    <!-- Player -->
+    <string name="player_save">Save</string>
+    <string name="player_share">Share</string>
+    <string name="player_close">Close</string>
+    <string name="player_failed">This clip would not play, even converted on the server — the recording may be damaged, or the server has no ffmpeg. Save it and try VLC.</string>
+    <string name="player_preparing_share">Fetching %1$s to share…</string>
+
+    <!-- Files -->
+    <string name="saved_to_downloads">Saved %1$s to Downloads</string>
+    <string name="save_failed">Could not save %1$s: %2$s</string>
+    <string name="share_failed">Could not share %1$s: %2$s</string>
+    <string name="downloading">Downloading %1$s</string>
+    <string name="no_app_for_link">No app on this phone opens that link.</string>
+    <string name="share_with">Share</string>
+
+    <!-- Notifications -->
+    <string name="channel_downloads">Downloads</string>
+
+    <!-- Settings -->
+    <string name="pref_cat_server">Your Clip Hanger server</string>
+    <string name="pref_address">Server address</string>
+    <string name="pref_find">Find servers on this network</string>
+    <string name="pref_find_summary">Lists the Clip Hanger servers that answer on this Wi-Fi.</string>
+    <string name="pref_cat_about">About</string>
+    <string name="pref_version">Version</string>
+    <string name="pref_thin">Why there is no server on the phone</string>
+    <string name="pref_thin_summary">The footage lives on the machine your cameras record to, and Clip Hanger has to run beside it. This app is a window onto that server.</string>
+    <string name="pref_developer">Developer</string>
+    <string name="pref_developer_summary">github.com/chinmay28</string>
+</resources>

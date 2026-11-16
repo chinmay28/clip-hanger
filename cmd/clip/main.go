@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -20,6 +21,7 @@ import (
 	"time"
 
 	"github.com/chinmay28/clip-hanger/internal/clips"
+	"github.com/chinmay28/clip-hanger/internal/discover"
 	"github.com/chinmay28/clip-hanger/internal/server"
 	"github.com/chinmay28/clip-hanger/internal/storage"
 	"github.com/chinmay28/clip-hanger/internal/version"
@@ -66,6 +68,10 @@ Flags for serve:
   --port N              listen port (default 8124)
   --bind ADDR           bind address (default 0.0.0.0)
   --enforce-every DUR   how often quotas are enforced (default 1h; 0 = never)
+  --discovery           answer the phone app's "Find on this network" on UDP
+                        (default true; never on a loopback --bind; also off
+                        with $CLIP_DISCOVERY=off)
+  --discovery-port N    the UDP port for that (default 8125)
 
 Flags for prune:
   --clips DIR, --data DIR   as above
@@ -159,6 +165,8 @@ func cmdServe(args []string) {
 	port := fs.Int("port", 8124, "listen port")
 	bind := fs.String("bind", "0.0.0.0", "bind address")
 	every := fs.Duration("enforce-every", time.Hour, "how often quotas are enforced (0 disables)")
+	discovery := fs.Bool("discovery", true, "answer the phone app's LAN discovery broadcast (off on a loopback bind, or with CLIP_DISCOVERY=off)")
+	discoveryPort := fs.Int("discovery-port", discover.DefaultPort, "UDP port for LAN discovery")
 	fs.Parse(args)
 
 	pinned, data := resolveSources(clipsFlags, *dataFlag)
@@ -185,6 +193,21 @@ func cmdServe(args []string) {
 	go srv.WarmScanCache()
 	if *every > 0 {
 		go srv.EnforceLoop(*every)
+	}
+
+	// "Find on this network" in the phone app: a broadcast answered with
+	// this server's port, name and version. Best effort — a port somebody
+	// else holds costs the app its shortcut, never the server its start.
+	if discover.Enabled(*discovery, os.Getenv("CLIP_DISCOVERY"), *bind) {
+		name, _ := os.Hostname()
+		go func() {
+			err := discover.Listen(context.Background(), fmt.Sprintf(":%d", *discoveryPort), func() discover.Announcement {
+				return discover.Announcement{Name: name, Port: *port, Version: version.String()}
+			})
+			if err != nil {
+				log.Printf("LAN discovery off: %v", err)
+			}
+		}()
 	}
 
 	addr := fmt.Sprintf("%s:%d", *bind, *port)
