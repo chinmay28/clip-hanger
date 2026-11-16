@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Every row: titles wrap rather than being cut off, and no gutter is kept
+     for icons that none of them has. -->
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/pref_cat_server">
+        <EditTextPreference
+            app:iconSpaceReserved="false"
+            app:key="server_address"
+            app:singleLineTitle="false"
+            app:title="@string/pref_address"
+            app:useSimpleSummaryProvider="true" />
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="find_servers"
+            app:singleLineTitle="false"
+            app:summary="@string/pref_find_summary"
+            app:title="@string/pref_find" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/pref_cat_about">
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="version"
+            app:singleLineTitle="false"
+            app:title="@string/pref_version" />
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="thin"
+            app:singleLineTitle="false"
+            app:summary="@string/pref_thin_summary"
+            app:title="@string/pref_thin" />
+        <Preference
+            app:iconSpaceReserved="false"
+            app:key="developer"
+            app:singleLineTitle="false"
+            app:summary="@string/pref_developer_summary"
+            app:title="@string/pref_developer" />
+    </PreferenceCategory>
+</PreferenceScreen>

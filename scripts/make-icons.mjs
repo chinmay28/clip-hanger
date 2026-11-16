@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Renders the home-screen icon PNGs from web/public/icon.svg.
+ * Renders the home-screen icon PNGs — and the Android app's launcher icons —
+ * from web/public/icon.svg.
  *
  * A phone that adds the app to its home screen will not take the SVG: iOS
  * only reads `apple-touch-icon` as a raster image, and Android wants PNGs of
@@ -21,7 +22,7 @@
  */
 import { createHash } from 'node:crypto'
 import { deflateSync } from 'node:zlib'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -45,12 +46,30 @@ const source = join(publicDir, 'icon.svg')
  *    until they clear the safe zone with room to spare.
  *  - The plain `any` icons keep the SVG's own rounded square on transparency,
  *    for the browsers and launchers that place an icon without masking it.
+ *
+ * And for the Android app (apps/android):
+ *
+ *  - `mipmap-*\/ic_launcher.png`: the rounded icon at 48dp in every density,
+ *    for launchers older than adaptive icons.
+ *  - `mipmap-*\/ic_launcher_foreground.png`: the adaptive icon's foreground,
+ *    108dp with no plate (`plate: 'none'`) — the plate is the background
+ *    colour below — and the artwork pulled in until its farthest corner sits
+ *    inside the 66dp circle every launcher mask keeps.
+ *  - `drawable-nodpi/clip_logo.png`: the mark on the app's own screens.
  */
+const ANDROID_RES = join('apps', 'android', 'app', 'src', 'main', 'res')
+const DENSITIES = [['mdpi', 1], ['hdpi', 1.5], ['xhdpi', 2], ['xxhdpi', 3], ['xxxhdpi', 4]]
+
 const VARIANTS = [
   { file: 'apple-touch-icon.png', size: 180, plate: 'square' },
   { file: 'icon-192.png', size: 192, plate: 'rounded' },
   { file: 'icon-512.png', size: 512, plate: 'rounded' },
   { file: 'icon-maskable-512.png', size: 512, plate: 'square', inset: 0.78 },
+  ...DENSITIES.flatMap(([name, scale]) => [
+    { path: join(ANDROID_RES, `mipmap-${name}`, 'ic_launcher.png'), size: 48 * scale, plate: 'rounded' },
+    { path: join(ANDROID_RES, `mipmap-${name}`, 'ic_launcher_foreground.png'), size: 108 * scale, plate: 'none', inset: 0.6 },
+  ]),
+  { path: join(ANDROID_RES, 'drawable-nodpi', 'clip_logo.png'), size: 192, plate: 'rounded' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -240,6 +259,7 @@ function render(mark, { size, plate, inset = 1 }) {
     // The rectangle that covers the whole viewBox is the background plate:
     // it is the one variants reshape, and the one the artwork sits inside.
     const isPlate = shape.w >= mark.grid && shape.h >= mark.grid
+    if (isPlate && plate === 'none') continue
     const shrink = isPlate ? 1 : inset
 
     const w = shape.w * shrink
@@ -324,9 +344,34 @@ const check = process.argv.includes('--check')
 const mark = readMark(readFileSync(source, 'utf8'))
 let stale = 0
 
-for (const variant of VARIANTS) {
-  const png = encodePNG(render(mark, variant), variant.size)
-  const path = join(publicDir, variant.file)
+/* The adaptive icon's background is the plate's own colour, read off the SVG
+   like everything else, so a new plate colour cannot leave the launcher
+   showing the old one behind the new artwork. */
+const plateShape = mark.shapes.find((s) => s.kind === 'rect' && s.w >= mark.grid && s.h >= mark.grid)
+if (!plateShape || !plateShape.fill) throw new Error('icon.svg: no full-size plate to take the background colour from')
+const TEXT_OUTPUTS = [{
+  path: join(ANDROID_RES, 'values', 'ic_launcher_background.xml'),
+  body: '<?xml version="1.0" encoding="utf-8"?>\n' +
+    '<!-- The icon\'s plate colour. Written from web/public/icon.svg by `make icons`. -->\n' +
+    '<resources>\n' +
+    `    <color name="ic_launcher_background">${plateShape.fill.toUpperCase()}</color>\n` +
+    '</resources>\n',
+}]
+
+const outputs = [
+  ...VARIANTS.map((v) => ({
+    name: v.file ?? v.path,
+    path: v.file ? join(publicDir, v.file) : join(root, v.path),
+    bytes: () => encodePNG(render(mark, v), v.size),
+    size: v.size,
+  })),
+  ...TEXT_OUTPUTS.map((t) => ({ name: t.path, path: join(root, t.path), bytes: () => Buffer.from(t.body) })),
+]
+
+for (const out of outputs) {
+  const png = out.bytes()
+  const path = out.path
+  const variant = { file: out.name, size: out.size }
 
   if (check) {
     let current = null
@@ -342,8 +387,9 @@ for (const variant of VARIANTS) {
     continue
   }
 
+  mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, png)
-  console.log(`${variant.file.padEnd(24)} ${variant.size}px  ${(png.length / 1024).toFixed(1)} KB`)
+  console.log(`${variant.file.padEnd(24)} ${variant.size ? `${variant.size}px  ` : ''}${(png.length / 1024).toFixed(1)} KB`)
 }
 
 if (check) {

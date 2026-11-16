@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- web/src/theme.js -->
+    <color name="clip_bg">#FF0A0E17</color>
+    <color name="clip_surface">#FF111827</color>
+    <color name="clip_text">#FFE2E8F0</color>
+    <color name="clip_dim">#FF94A3B8</color>
+    <color name="clip_muted">#FF64748B</color>
+    <color name="clip_accent">#FF0EA5E9</color>
+    <color name="clip_accent_bright">#FF38BDF8</color>
+    <!-- The developer flash's veil: the page's rgba(10, 14, 23, 0.78). -->
+    <color name="clip_veil">#C70A0E17</color>
+</resources>
