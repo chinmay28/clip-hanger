@@ -11,15 +11,18 @@
  * binary gets them stamped in via -ldflags, the web bundle gets the assembled
  * string inlined by Vite. Both call this file, so they can never disagree.
  *
- *   - YEAR/MONTH are the commit date of HEAD, so the release line follows the
- *     calendar with no constant to bump by hand. Deliberately the commit clock
- *     rather than the build clock: the same tree builds to the same version
- *     whenever it is built, and an old checkout still reports what it shipped.
+ *   - YEAR/MONTH are the month of HEAD's committer date, in the committer's
+ *     own timezone (`git log -1 --format=%cI`), so the release line follows
+ *     the calendar with no constant to bump by hand. Deliberately the commit
+ *     clock rather than the build clock: the same tree builds to the same
+ *     version whenever it is built, and an old checkout still reports what it
+ *     shipped.
  *   - PATCH is `git rev-list --count HEAD`.
  *
  * Usage:
  *   node scripts/version.mjs            # print e.g. v2026.9.42
  *   node scripts/version.mjs --patch    # print just the commit count (42)
+ *   node scripts/version.mjs --date     # print the commit's month (2026-09)
  *   node scripts/version.mjs --ldflags  # print the -X flags that stamp a build
  *   import { appVersion } from './scripts/version.mjs'
  */
@@ -59,15 +62,26 @@ function git(args) {
  * already an unstamped build — see commitCount().
  */
 export function releaseLine() {
-  const committed = git(['log', '-1', '--format=%cd', '--date=format:%Y-%m']);
-  const parsed = /^(\d{4})-(\d{2})$/.exec(committed ?? '');
-  if (!parsed) {
-    const now = new Date();
-    return { year: now.getFullYear(), month: now.getMonth() + 1 };
-  }
-  // Number() drops the zero padding git's %m writes: semver forbids a leading
-  // zero, so `2026.9` is the only spelling of September that is a legal tag.
-  return { year: Number(parsed[1]), month: Number(parsed[2]) };
+  const [year, month] = commitMonth().split('-').map(Number);
+  // Number() drops the zero padding: semver forbids a leading zero, so
+  // `2026.9` is the only spelling of September that is a legal tag.
+  return { year, month };
+}
+
+/**
+ * HEAD's month as "YYYY-MM" — what `--date` prints, for anything (a release
+ * workflow, the Android build) that wants the line without the patch. The
+ * committer date rather than the author's (a change authored in September and
+ * landed in October is an October release), in the committer's own timezone,
+ * so the month is the one on the commit as git shows it. With no commit to
+ * ask, the build clock's month (UTC).
+ */
+export function commitMonth() {
+  const iso = git(['log', '-1', '--format=%cI']);
+  const m = iso && /^(\d{4})-(\d{2})/.exec(iso);
+  if (m && Number(m[2]) >= 1 && Number(m[2]) <= 12) return `${m[1]}-${m[2]}`;
+  const t = new Date();
+  return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
 /**
@@ -124,6 +138,6 @@ export function ldflags() {
 // Invoked directly (by the build scripts), print rather than export.
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const mode = process.argv.find((a) => a.startsWith('--'));
-  const render = { '--patch': commitCount, '--ldflags': ldflags }[mode] ?? appVersion;
+  const render = { '--patch': commitCount, '--date': commitMonth, '--ldflags': ldflags }[mode] ?? appVersion;
   process.stdout.write(render() + '\n');
 }
