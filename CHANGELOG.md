@@ -18,7 +18,7 @@ commit will build (`make version` on the commit before it, plus one) and
 pushing it. `Unreleased` never matches a version, so it can never publish by
 accident.
 
-## Unreleased
+## v2026.11.8
 
 **Downloads:** the server binaries as before (`clip-<version>-linux-amd64`,
 `-linux-arm64`, `-darwin-*`, `-windows-amd64.exe`), and the Android app,
