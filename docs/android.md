@@ -19,8 +19,10 @@ Download **`clip-hanger.apk`** on the phone and open it:
 <https://github.com/chinmay28/clip-hanger/releases/latest/download/clip-hanger.apk>
 
 Android asks once to allow installs from the browser you used. Android 10 or
-newer. A new release installs over the old one, keeping its settings. (The APK
-is signed with a debug key, so Play Protect may ask you to confirm it.)
+newer. A new release installs over the old one, keeping its settings.
+Every release is signed with the same key, so a new one installs over the old.
+Releases from before that key (signed with a throwaway debug key) are the one
+exception: uninstall such a build once before installing a newer one.
 
 ## First run
 
